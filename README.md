@@ -7,42 +7,85 @@ Core installer logic and templates are kept in a private repository and can be u
 ## Access Requirements
 
 1. You must be added as an approved collaborator/team member on the private installer repo.
-2. You must authenticate locally:
+2. You must authenticate locally with the same GitHub account that was granted access:
 
 ```powershell
-gh auth login
+gh auth login --web --git-protocol https --hostname github.com
 ```
 
 If you do not have access, install commands will fail with `403` or `404`.
+
+## Step 0 (Recommended): PATH-Safe Bootstrap for VS Code
+
+Run this once in the terminal before install commands:
+
+```powershell
+$gh = (Get-Command gh -ErrorAction SilentlyContinue).Source
+if (-not $gh) {
+  $gh = "C:\Program Files\GitHub CLI\gh.exe"
+}
+if (-not (Test-Path $gh)) {
+  winget install --id GitHub.cli -e
+  Write-Host "Restart VS Code terminal, then run this bootstrap again."
+  return
+}
+& $gh --version
+& $gh auth status
+```
+
+If `auth status` says not logged in:
+
+```powershell
+& $gh auth login --web --git-protocol https --hostname github.com
+```
 
 ## One-Command Install (Run in target project root)
 
 ### Backend
 
 ```powershell
+$gh = (Get-Command gh -ErrorAction SilentlyContinue).Source
+if (-not $gh) { $gh = "C:\Program Files\GitHub CLI\gh.exe" }
 $repo = "figchamdemb/Pgg-uni-memory-bank"
 $tmp = Join-Path $env:TEMP "install-backend.ps1"
-gh api -H "Accept: application/vnd.github.raw" "/repos/$repo/contents/install-backend.ps1?ref=main" > $tmp
+& $gh api -H "Accept: application/vnd.github.raw" "/repos/$repo/contents/install-backend.ps1?ref=main" > $tmp
 powershell -ExecutionPolicy Bypass -File $tmp -TargetRepoPath (Get-Location).Path
 ```
 
 ### Frontend
 
 ```powershell
+$gh = (Get-Command gh -ErrorAction SilentlyContinue).Source
+if (-not $gh) { $gh = "C:\Program Files\GitHub CLI\gh.exe" }
 $repo = "figchamdemb/Pgg-uni-memory-bank"
 $tmp = Join-Path $env:TEMP "install-frontend.ps1"
-gh api -H "Accept: application/vnd.github.raw" "/repos/$repo/contents/install-frontend.ps1?ref=main" > $tmp
+& $gh api -H "Accept: application/vnd.github.raw" "/repos/$repo/contents/install-frontend.ps1?ref=main" > $tmp
 powershell -ExecutionPolicy Bypass -File $tmp -TargetRepoPath (Get-Location).Path
 ```
 
 ### Mobile
 
 ```powershell
+$gh = (Get-Command gh -ErrorAction SilentlyContinue).Source
+if (-not $gh) { $gh = "C:\Program Files\GitHub CLI\gh.exe" }
 $repo = "figchamdemb/Pgg-uni-memory-bank"
 $tmp = Join-Path $env:TEMP "install-mobile.ps1"
-gh api -H "Accept: application/vnd.github.raw" "/repos/$repo/contents/install-mobile.ps1?ref=main" > $tmp
+& $gh api -H "Accept: application/vnd.github.raw" "/repos/$repo/contents/install-mobile.ps1?ref=main" > $tmp
 powershell -ExecutionPolicy Bypass -File $tmp -TargetRepoPath (Get-Location).Path
 ```
+
+## Troubleshooting
+
+- `gh : The term 'gh' is not recognized`
+  - use the PATH-safe bootstrap block above
+  - or fully close/reopen VS Code after GitHub CLI install
+- `HTTP 403` or `HTTP 404` from `gh api`
+  - your current GitHub account does not have access to the private repo
+  - verify active account:
+    - `& $gh auth status`
+  - if wrong account, switch:
+    - `& $gh auth logout`
+    - `& $gh auth login --web --git-protocol https --hostname github.com`
 
 ## What Gets Installed Into Target Repo
 
