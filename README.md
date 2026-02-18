@@ -15,6 +15,22 @@ gh auth login --web --git-protocol https --hostname github.com
 
 If you do not have access, install commands will fail with `403` or `404`.
 
+### Owner setup (required once)
+
+Private repo owner must:
+1. Open private repo `Settings` -> `Collaborators and teams`.
+2. Invite each developer account that should install the kit.
+3. Developer must accept the invitation before running commands.
+
+Quick access check:
+
+```powershell
+$gh = "C:\Program Files\GitHub CLI\gh.exe"
+& $gh api /repos/figchamdemb/Pgg-uni-memory-bank --jq '.private'
+```
+
+Expected: `true` (no error).
+
 ## Step 0 (Recommended): PATH-Safe Bootstrap for VS Code
 
 Run this once in the terminal before install commands:
@@ -86,6 +102,14 @@ powershell -ExecutionPolicy Bypass -File $tmp -TargetRepoPath (Get-Location).Pat
   - if wrong account, switch:
     - `& $gh auth logout`
     - `& $gh auth login --web --git-protocol https --hostname github.com`
+- `WARNING: Target is not a git repository (.git missing); skipped hook installation.`
+  - this means Memory-bank files were created, but hooks were not installed
+  - fix:
+    - `git init`
+    - `powershell -ExecutionPolicy Bypass -File .\scripts\install_memory_bank_hooks.ps1 -Mode warn`
+  - verify:
+    - `git config --get core.hooksPath` -> `.githooks`
+    - `git config --get memorybank.mode` -> `warn` or `strict`
 
 ## What Gets Installed Into Target Repo
 
