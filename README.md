@@ -1,62 +1,57 @@
 # Pgg Universal Memory-bank - Public Install Guide
 
-This public repository contains only installation instructions.
+This public repository contains installation and usage instructions.
+Core installer logic and templates are in a private repository with access control.
 
-Core installer logic and templates are kept in a private repository and can be used only by approved collaborators.
+## Quick Links
+- Non-technical guide: `NON_TECHNICAL_QUICKSTART.md`
+- Troubleshooting guide: `TROUBLESHOOTING.md`
 
 ## Access Requirements
-
-1. You must be added as an approved collaborator/team member on the private installer repo.
-2. You must authenticate locally with the same GitHub account that was granted access:
+1. You must be added as collaborator/team member on private repo `figchamdemb/Pgg-uni-memory-bank`.
+2. You must authenticate locally using that same GitHub account.
 
 ```powershell
 gh auth login --web --git-protocol https --hostname github.com
 ```
 
-If you do not have access, install commands will fail with `403` or `404`.
+If access is missing, install commands return `403` or `404`.
 
-### Owner setup (required once)
-
-Private repo owner must:
+### Owner Setup (one-time)
 1. Open private repo `Settings` -> `Collaborators and teams`.
-2. Invite each developer account that should install the kit.
-3. Developer must accept the invitation before running commands.
+2. Invite developer account.
+3. Developer accepts invite.
 
-Quick access check:
+## Which Terminal Should I Use?
+- VS Code terminal is recommended for daily use.
+- External PowerShell is also fine for initial setup.
+- If VS Code opens CMD by default, that is also supported.
 
-```powershell
-$gh = "C:\Program Files\GitHub CLI\gh.exe"
-& $gh api /repos/figchamdemb/Pgg-uni-memory-bank --jq '.private'
-```
+Permissions:
+- Normal user is enough for `pg` commands.
+- Admin may be needed only if your machine blocks `winget` installs.
 
-Expected: `true` (no error).
+## Setup Order (Important)
+1. One-time per machine: install `pg` global command.
+2. One-time per repo: run `pg install backend|frontend|mobile`.
+3. Every session: run `pg start -Yes` before coding, and `pg end` when done.
 
-## Step 0 (Recommended): PATH-Safe Bootstrap for VS Code
-
-Run this once in the terminal before install commands:
+## Step 0: Ensure GitHub CLI
+PowerShell:
 
 ```powershell
 $gh = (Get-Command gh -ErrorAction SilentlyContinue).Source
 if (-not $gh) {
-  $gh = "C:\Program Files\GitHub CLI\gh.exe"
-}
-if (-not (Test-Path $gh)) {
   winget install --id GitHub.cli -e
-  Write-Host "Restart VS Code terminal, then run this bootstrap again."
+  Write-Host "Restart terminal, then rerun."
   return
 }
-& $gh --version
 & $gh auth status
+if ($LASTEXITCODE -ne 0) { & $gh auth login --web --git-protocol https --hostname github.com }
 ```
 
-If `auth status` says not logged in:
-
-```powershell
-& $gh auth login --web --git-protocol https --hostname github.com
-```
-
-## Step 1 (Recommended): One-Time Global `pg` Command Setup
-Run once per machine:
+## Step 1: One-Time Global `pg` Setup
+PowerShell:
 
 ```powershell
 $gh = (Get-Command gh -ErrorAction SilentlyContinue).Source
@@ -67,102 +62,96 @@ $tmp = Join-Path $env:TEMP "pg-install.ps1"
 powershell -ExecutionPolicy Bypass -File $tmp
 ```
 
-After this, you can use `pg` in PowerShell without `.\`.
+Verify:
 
-## One-Command Install (Run in target project root)
+```powershell
+pg version
+```
 
-### Backend
+## Step 2: Install Into a Project
+Run in project root.
+
+Backend:
 
 ```powershell
 pg install backend
 ```
 
-### Frontend
+Frontend:
 
 ```powershell
 pg install frontend
 ```
 
-### Mobile
+Mobile:
 
 ```powershell
 pg install mobile
 ```
 
-Optional target path:
+CMD explicit target path:
 
-```powershell
-pg install backend --target C:\path\to\repo
+```bat
+pg install backend --target "%CD%"
 ```
 
-## Start Session (Required Before Coding)
+PowerShell explicit target path:
 
-After install, run inside target repo:
+```powershell
+pg install backend --target (Get-Location).Path
+```
+
+Cross-shell safe:
+
+```bat
+pg install backend --target .
+```
+
+## Step 3: Daily Session Commands
+Start before coding:
 
 ```powershell
 pg start -Yes
 ```
 
-Check status:
+Status:
 
 ```powershell
 pg status
 ```
 
-End session/shift:
+End shift:
 
 ```powershell
 pg end -Note "finished for today"
 ```
 
-This refreshes memory docs and writes:
-- `Memory-bank/_generated/session-state.json`
+Notes:
+- `pg install` is not daily; it is one-time per repo.
+- `pg start` / `pg end` are daily session commands.
 
-Guard expects an active session and prompts refresh after session budget is used.
-Session check is blocking even if enforcement mode is `warn`.
+## VS Code + AI Chat Workflow
+- Start in terminal with `pg start -Yes`.
+- Continue work in Copilot/Claude/Codex chat.
+- End in terminal with `pg end ...` before final summary/commit.
 
-## Troubleshooting
-
-- `gh : The term 'gh' is not recognized`
-  - use the PATH-safe bootstrap block above
-  - or fully close/reopen VS Code after GitHub CLI install
-- `pg : The term 'pg' is not recognized`
-  - run Step 1 (global `pg` setup) again
-  - close/reopen terminal after installer updates user PATH
-- `HTTP 403` or `HTTP 404` from `gh api`
-  - your current GitHub account does not have access to the private repo
-  - verify active account:
-    - `& $gh auth status`
-  - if wrong account, switch:
-    - `& $gh auth logout`
-    - `& $gh auth login --web --git-protocol https --hostname github.com`
-- `WARNING: Target is not inside a git work tree; skipped hook installation.`
-  - this means Memory-bank files were created, but hooks were not installed
-  - fix:
-    - `git init`
-    - `powershell -ExecutionPolicy Bypass -File .\scripts\install_memory_bank_hooks.ps1 -Mode warn`
-  - verify:
-    - `git config --get core.hooksPath` -> `.githooks` or `<subfolder>/.githooks` in monorepos
-    - `git config --get memorybank.mode` -> `warn` or `strict`
-
-## What Gets Installed Into Target Repo
-
+## What Gets Installed
 - `Memory-bank/` structure and docs
 - `AGENTS.md` start/end protocol
 - local hook guard and CI workflow
 - summary/generation scripts
 - session bootstrap scripts
 
-Default enforcement mode is `warn`.  
-Switch later when stable:
+Default enforcement mode is `warn`.
+
+Switch to strict later:
 
 ```powershell
 git config memorybank.mode strict
 ```
 
 ## Security / IP Notes
-
-- This repo is public by design for discoverability.
+- This repo is public for discoverability.
 - Installer internals stay in private repo access control.
-- Authorized users can still inspect local outputs/scripts they run.
+- Authorized users can inspect local outputs/scripts they run.
 - Do not store secrets in Memory-bank docs or scripts.
