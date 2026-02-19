@@ -108,6 +108,7 @@ This refreshes memory docs and writes:
 - `Memory-bank/_generated/session-state.json`
 
 Guard expects an active session and prompts refresh after session budget is used.
+Session check is blocking even if enforcement mode is `warn`.
 
 ## Troubleshooting
 
