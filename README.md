@@ -95,13 +95,19 @@ powershell -ExecutionPolicy Bypass -File $tmp -TargetRepoPath (Get-Location).Pat
 After install, run inside target repo:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\start_memory_bank_session.ps1
+.\pg.ps1 start -Yes
 ```
 
-Non-interactive:
+Check status:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\start_memory_bank_session.ps1 -Yes
+.\pg.ps1 status
+```
+
+End session/shift:
+
+```powershell
+.\pg.ps1 end -Note "finished for today"
 ```
 
 This refreshes memory docs and writes:
