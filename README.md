@@ -90,6 +90,25 @@ $tmp = Join-Path $env:TEMP "install-mobile.ps1"
 powershell -ExecutionPolicy Bypass -File $tmp -TargetRepoPath (Get-Location).Path
 ```
 
+## Start Session (Required Before Coding)
+
+After install, run inside target repo:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\start_memory_bank_session.ps1
+```
+
+Non-interactive:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\start_memory_bank_session.ps1 -Yes
+```
+
+This refreshes memory docs and writes:
+- `Memory-bank/_generated/session-state.json`
+
+Guard expects an active session and prompts refresh after session budget is used.
+
 ## Troubleshooting
 
 - `gh : The term 'gh' is not recognized`
@@ -102,13 +121,13 @@ powershell -ExecutionPolicy Bypass -File $tmp -TargetRepoPath (Get-Location).Pat
   - if wrong account, switch:
     - `& $gh auth logout`
     - `& $gh auth login --web --git-protocol https --hostname github.com`
-- `WARNING: Target is not a git repository (.git missing); skipped hook installation.`
+- `WARNING: Target is not inside a git work tree; skipped hook installation.`
   - this means Memory-bank files were created, but hooks were not installed
   - fix:
     - `git init`
     - `powershell -ExecutionPolicy Bypass -File .\scripts\install_memory_bank_hooks.ps1 -Mode warn`
   - verify:
-    - `git config --get core.hooksPath` -> `.githooks`
+    - `git config --get core.hooksPath` -> `.githooks` or `<subfolder>/.githooks` in monorepos
     - `git config --get memorybank.mode` -> `warn` or `strict`
 
 ## What Gets Installed Into Target Repo
@@ -117,6 +136,7 @@ powershell -ExecutionPolicy Bypass -File $tmp -TargetRepoPath (Get-Location).Pat
 - `AGENTS.md` start/end protocol
 - local hook guard and CI workflow
 - summary/generation scripts
+- session bootstrap scripts
 
 Default enforcement mode is `warn`.  
 Switch later when stable:
