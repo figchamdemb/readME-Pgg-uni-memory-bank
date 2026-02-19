@@ -55,39 +55,44 @@ If `auth status` says not logged in:
 & $gh auth login --web --git-protocol https --hostname github.com
 ```
 
+## Step 1 (Recommended): One-Time Global `pg` Command Setup
+Run once per machine:
+
+```powershell
+$gh = (Get-Command gh -ErrorAction SilentlyContinue).Source
+if (-not $gh) { $gh = "C:\Program Files\GitHub CLI\gh.exe" }
+$repo = "figchamdemb/Pgg-uni-memory-bank"
+$tmp = Join-Path $env:TEMP "pg-install.ps1"
+& $gh api -H "Accept: application/vnd.github.raw" "/repos/$repo/contents/pg-install.ps1?ref=main" > $tmp
+powershell -ExecutionPolicy Bypass -File $tmp
+```
+
+After this, you can use `pg` in PowerShell without `.\`.
+
 ## One-Command Install (Run in target project root)
 
 ### Backend
 
 ```powershell
-$gh = (Get-Command gh -ErrorAction SilentlyContinue).Source
-if (-not $gh) { $gh = "C:\Program Files\GitHub CLI\gh.exe" }
-$repo = "figchamdemb/Pgg-uni-memory-bank"
-$tmp = Join-Path $env:TEMP "install-backend.ps1"
-& $gh api -H "Accept: application/vnd.github.raw" "/repos/$repo/contents/install-backend.ps1?ref=main" > $tmp
-powershell -ExecutionPolicy Bypass -File $tmp -TargetRepoPath (Get-Location).Path
+pg install backend
 ```
 
 ### Frontend
 
 ```powershell
-$gh = (Get-Command gh -ErrorAction SilentlyContinue).Source
-if (-not $gh) { $gh = "C:\Program Files\GitHub CLI\gh.exe" }
-$repo = "figchamdemb/Pgg-uni-memory-bank"
-$tmp = Join-Path $env:TEMP "install-frontend.ps1"
-& $gh api -H "Accept: application/vnd.github.raw" "/repos/$repo/contents/install-frontend.ps1?ref=main" > $tmp
-powershell -ExecutionPolicy Bypass -File $tmp -TargetRepoPath (Get-Location).Path
+pg install frontend
 ```
 
 ### Mobile
 
 ```powershell
-$gh = (Get-Command gh -ErrorAction SilentlyContinue).Source
-if (-not $gh) { $gh = "C:\Program Files\GitHub CLI\gh.exe" }
-$repo = "figchamdemb/Pgg-uni-memory-bank"
-$tmp = Join-Path $env:TEMP "install-mobile.ps1"
-& $gh api -H "Accept: application/vnd.github.raw" "/repos/$repo/contents/install-mobile.ps1?ref=main" > $tmp
-powershell -ExecutionPolicy Bypass -File $tmp -TargetRepoPath (Get-Location).Path
+pg install mobile
+```
+
+Optional target path:
+
+```powershell
+pg install backend --target C:\path\to\repo
 ```
 
 ## Start Session (Required Before Coding)
@@ -95,19 +100,19 @@ powershell -ExecutionPolicy Bypass -File $tmp -TargetRepoPath (Get-Location).Pat
 After install, run inside target repo:
 
 ```powershell
-.\pg.ps1 start -Yes
+pg start -Yes
 ```
 
 Check status:
 
 ```powershell
-.\pg.ps1 status
+pg status
 ```
 
 End session/shift:
 
 ```powershell
-.\pg.ps1 end -Note "finished for today"
+pg end -Note "finished for today"
 ```
 
 This refreshes memory docs and writes:
@@ -121,6 +126,9 @@ Session check is blocking even if enforcement mode is `warn`.
 - `gh : The term 'gh' is not recognized`
   - use the PATH-safe bootstrap block above
   - or fully close/reopen VS Code after GitHub CLI install
+- `pg : The term 'pg' is not recognized`
+  - run Step 1 (global `pg` setup) again
+  - close/reopen terminal after installer updates user PATH
 - `HTTP 403` or `HTTP 404` from `gh api`
   - your current GitHub account does not have access to the private repo
   - verify active account:
